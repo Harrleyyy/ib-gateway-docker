@@ -14,8 +14,12 @@ RUN wget -q https://download2.interactivebrokers.com/portal/clientportal.gw.zip 
 
 WORKDIR /ibgateway
 
-# API Port freigeben
+# API Port freigeben (Render.com benötigt 7497)
 EXPOSE 7497
 
-# IB Gateway starten
-CMD ["bin/run.sh", "root/conf.yaml"]
+# Health Check für Render.com
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:5000 || exit 1
+
+# IB Gateway starten mit API Port
+CMD ["bin/run.sh", "root/conf.yaml", "--port=7497"]
