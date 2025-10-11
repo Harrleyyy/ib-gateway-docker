@@ -19,4 +19,5 @@ EXPOSE 5000 7497
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000 || exit 1
 
-CMD ["bin/run.sh", "root/conf.yaml", "--port=7497"]
+# IB Gateway mit 0.0.0.0 starten (für Render.com notwendig)
+CMD ["bin/run.sh", "root/conf.yaml", "--port=7497", "--host=0.0.0.0"]
