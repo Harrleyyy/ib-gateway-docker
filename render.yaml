@@ -66,3 +66,14 @@ services:
       # Ursache aller bisherigen Login-Fehlschläge.
       - key: IBEAM_USE_PAPER_ACCOUNT
         value: "True"
+      # Per Quellcode-Analyse (login_handler.py, _VERSIONS-Dict) bestätigt:
+      # IBeam kennt zwei Feldnamen für das Username-Feld je nach erkannter
+      # IBKR-Seitenversion - "user_name" (Version 1) vs. "username"
+      # (Version 2). Unsere Logs zeigen "Cannot determine the version,
+      # assuming version 1" -> IBeam sucht nach "user_name", findet es auf
+      # der aktuellen Seite nicht und läuft in eine TimeoutException beim
+      # Warten auf das Feld ("Logging in failed"). Fest auf Version 2s
+      # Feldnamen setzen, um die fehlschlagende Versionserkennung zu
+      # umgehen.
+      - key: IBEAM_USER_NAME_EL
+        value: "NAME@@username"

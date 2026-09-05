@@ -139,14 +139,23 @@ ein nicht existierendes Gateway laufen.
     10000 (`conf/conf.yaml`, `IBEAM_GATEWAY_BASE_URL` in `render.yaml`)
     statt zu versuchen, Render umzustimmen. Noch nicht mit einem
     erfolgreichen Deploy bestätigt.
-12. **Führende Vermutung für das verbleibende 404-Rätsel: IBKR blockt
-    Cloud-/Rechenzentrums-IPs.** Da selbst eine frisch heruntergeladene
-    Gateway-Version identisch fehlschlägt, deutet vieles darauf hin, dass
-    `api.ibkr.com` (per `proxyRemoteHost`) Anfragen von bekannten
-    Cloud-IP-Bereichen wie Render anders behandelt oder ablehnt - eine
-    verbreitete Anti-Bot-Maßnahme bei Brokern. **Nicht bestätigt.**
-    Der einzige eindeutige Test: dieselbe Konfiguration einmal per
-    `docker compose up --build` auf einem Rechner mit normalem
-    Heim-/Büro-Internet laufen lassen. Klappt es dort, ist Render als
-    Standort für den automatisierten Login ungeeignet, unabhängig von
-    weiterer Konfiguration.
+12. **Cloud-IP-Blockierung durch IBKR - eher unwahrscheinlich, nicht
+    ausgeschlossen.** War die führende Theorie, bis der eigentliche
+    Fehler gefunden wurde (Punkt 13). Falls der Login nach Punkt 13
+    weiterhin nicht klappt, ist das der nächste Verdächtige - eindeutig
+    nur per `docker compose up --build` auf einem Rechner mit normalem
+    Heim-/Büro-Internet zu testen.
+13. **Der eigentliche Login-Blocker: falscher Username-Feldname.** Per
+    Quellcode-Analyse von IBeams `login_handler.py` bestätigt: IBeam
+    kennt zwei Feldnamen für das Username-Eingabefeld je nach erkannter
+    IBKR-Seitenversion - `user_name` (Version 1, IBeams Fallback) vs.
+    `username` (Version 2). Unsere Logs zeigen durchgehend "Cannot
+    determine the version, assuming version 1" - IBeam sucht deshalb nach
+    `user_name`, findet es auf der aktuellen Seite nicht und läuft nach
+    Ablauf von `IBEAM_PAGE_LOAD_TIMEOUT` in eine `TimeoutException`
+    ("Logging in failed"). Das erklärt sowohl den Login-Fehlschlag als
+    auch indirekt die wiederkehrenden 404-Meldungen (Statuscheck läuft
+    weiter, während nie eine Session zustande kommt). Behoben per
+    `IBEAM_USER_NAME_EL=NAME@@username` in `render.yaml` - umgeht die
+    fehlschlagende Versionserkennung, statt sie zu reparieren. Noch nicht
+    mit einem erfolgreichen Deploy bestätigt.
