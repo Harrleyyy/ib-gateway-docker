@@ -74,13 +74,18 @@ ein nicht existierendes Gateway laufen.
 ## Bekannte Risiken (bewusst nicht vorab wegdiskutiert)
 
 1. **RAM war NICHT das Problem** (per Render-Metrics geprüft, weit unter
-   den 512MB Limit). Der tatsächliche Engpass: Render Free Tier drosselt
-   auf **0.15 CPU**. IBeams Standard-Wartezeit nach dem Gateway-Start
-   (`IBEAM_GATEWAY_STARTUP=20s`) reichte damit nicht, bis die
-   API-Routen des Java-Gateways wirklich bereit waren - führte zu
-   404-Antworten auf `/v1/api/tickle` direkt nach dem Start. Behoben
-   durch `IBEAM_GATEWAY_STARTUP=180`, `IBEAM_REQUEST_RETRIES=10`,
-   `IBEAM_REQUEST_TIMEOUT=30` in `render.yaml` - noch nicht mit einem
+   den 512MB Limit). CPU-Drosselung (0.15 CPU auf Free Tier) war ein
+   Faktor, aber vermutlich nicht die Hauptursache der 404-Antworten auf
+   `/v1/api/tickle` - siehe Punkt 2. `IBEAM_GATEWAY_STARTUP=180` etc.
+   bleiben trotzdem gesetzt, schaden nicht.
+2. **Eigene `conf.yaml` war unvollständig.** Wir hatten sie komplett neu
+   geschrieben statt die echte Original-Datei zu patchen und dabei u.a.
+   `proxyRemoteHost: "https://api.ibkr.com"` (sagt dem Gateway, wohin
+   API-Anfragen weitergeleitet werden) und den `webApps`-Block für die
+   Login-Seite vergessen - vermutlich die eigentliche Ursache der
+   404-Fehler. Jetzt durch die echte Original-`conf.yaml`
+   (aus `copy_cache/clientportal.gw/root/conf.yaml` im Voyz/ibeam-Repo)
+   ersetzt, nur der `ips`-Block bleibt angepasst. Noch nicht mit einem
    erfolgreichen Deploy bestätigt.
 2. **HTTPS intern zwingend erforderlich** (`conf/conf.yaml`,
    `listenSsl: true`). Ursprünglich hatten wir das auf `false` gestellt

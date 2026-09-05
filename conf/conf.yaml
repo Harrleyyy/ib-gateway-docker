@@ -1,30 +1,43 @@
-# Angepasste Gateway-Konfiguration für den Betrieb auf Render (Free Tier).
+# Basiert auf der ECHTEN Original-conf.yaml aus dem Gateway
+# (copy_cache/clientportal.gw/root/conf.yaml im Voyz/ibeam-Repo). Unsere
+# vorherige Version war eine Neuerstellung von Grund auf und hat dabei
+# wichtige Einstellungen weggelassen - vor allem `proxyRemoteHost`
+# (sagt dem Gateway, wohin API-Anfragen überhaupt weitergeleitet werden
+# sollen) und den `webApps`-Block für die Login-Seite selbst. Das war
+# vermutlich die eigentliche Ursache der 404-Antworten auf
+# /v1/api/tickle und /sso/Login, nicht (nur) Timing/CPU.
 #
-# 1. listenSsl: true (IBeam-Standard, NICHT abschalten)
-#    Ursprünglich hatten wir hier auf false gestellt, in der Annahme,
-#    Render würde TLS selbst terminieren und intern per HTTP weiterleiten.
-#    Per Render-Deploy-Log bestätigt falsch: IBeams eigene
-#    Login-Automatisierung (Selenium + interner Status-Check) lädt intern
-#    fest "https://localhost:5000/..." - mit listenSsl: false bricht das
-#    mit SSL-Handshake-Fehlern ab (net::ERR_CONNECTION_CLOSED). Deshalb
-#    zurück auf HTTPS mit dem von IBKR mitgelieferten selbstsignierten
-#    Zertifikat. Externe Aufrufer (gateway_client.py, UptimeRobot) nutzen
-#    ohnehin Renders öffentliche HTTPS-URL mit gültigem Zertifikat -
-#    ob/wie Render intern zu diesem HTTPS-Port durchreicht, ist der
-#    nächste zu verifizierende Punkt (siehe docs/SETUP.md).
-#
-# 2. ips.allow enthält 0.0.0.0/0
-#    Die Aufrufer (Claude-Code-Routine in der Cloud, UptimeRobot-Pinger)
-#    haben keine feste, vorhersagbare IP. Das öffnet die Gateway-API für
-#    beliebige Absender, die die Render-URL kennen - akzeptabel nur, weil
-#    hier ausschließlich ein Paper-Trading-Account ohne echtes Geld
-#    dahinterhängt. NICHT unverändert für ein Live-Konto verwenden.
+# Einzige bewusste Abweichung vom Original: der `ips`-Block (siehe unten).
+ip2loc: "US"
+proxyRemoteSsl: true
+proxyRemoteHost: "https://api.ibkr.com"
 listenPort: 5000
 listenSsl: true
-
+ccp: false
+svcEnvironment: "v1"
+sslCert: "vertx.jks"
+sslPwd: "mywebapi"
+authDelay: 3000
+portalBaseURL: ""
+serverOptions:
+  blockedThreadCheckInterval: 1000000
+  eventLoopPoolSize: 20
+  workerPoolSize: 20
+  maxWorkerExecuteTime: 100
+  internalBlockingPoolSize: 20
 cors:
   origin.allowed: "*"
+  allowCredentials: false
+webApps:
+  - name: "demo"
+    index: "index.html"
 
+# Original hier: allow-Liste mit privaten IP-Bereichen + deny: [0.0.0.0/0]
+# am Ende (alles andere sperren). Wir kehren das um, weil die Aufrufer
+# (Claude-Code-Routine in der Cloud, UptimeRobot) keine feste,
+# vorhersagbare IP haben - akzeptabel nur, weil hier ausschließlich ein
+# Paper-Trading-Account ohne echtes Geld dahinterhängt. NICHT
+# unverändert für ein Live-Konto übernehmen.
 ips:
   allow:
     - 0.0.0.0/0
