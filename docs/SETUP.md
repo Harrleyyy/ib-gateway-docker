@@ -145,17 +145,22 @@ ein nicht existierendes Gateway laufen.
     weiterhin nicht klappt, ist das der nächste Verdächtige - eindeutig
     nur per `docker compose up --build` auf einem Rechner mit normalem
     Heim-/Büro-Internet zu testen.
-13. **Der eigentliche Login-Blocker: falscher Username-Feldname.** Per
-    Quellcode-Analyse von IBeams `login_handler.py` bestätigt: IBeam
-    kennt zwei Feldnamen für das Username-Eingabefeld je nach erkannter
-    IBKR-Seitenversion - `user_name` (Version 1, IBeams Fallback) vs.
-    `username` (Version 2). Unsere Logs zeigen durchgehend "Cannot
-    determine the version, assuming version 1" - IBeam sucht deshalb nach
-    `user_name`, findet es auf der aktuellen Seite nicht und läuft nach
-    Ablauf von `IBEAM_PAGE_LOAD_TIMEOUT` in eine `TimeoutException`
-    ("Logging in failed"). Das erklärt sowohl den Login-Fehlschlag als
-    auch indirekt die wiederkehrenden 404-Meldungen (Statuscheck läuft
-    weiter, während nie eine Session zustande kommt). Behoben per
-    `IBEAM_USER_NAME_EL=NAME@@username` in `render.yaml` - umgeht die
-    fehlschlagende Versionserkennung, statt sie zu reparieren. Noch nicht
-    mit einem erfolgreichen Deploy bestätigt.
+13. **Falscher Username-Feldname - WIDERLEGT als Ursache.** War die
+    Theorie basierend auf `login_handler.py`'s `_VERSIONS`-Dict
+    (`user_name` vs. `username`). Per gezielter Log-Suche nach "Timeout
+    reached" widerlegt: IBeam meldet bei JEDEM Versuch explizit den
+    ERSTEN der beiden möglichen Fehlertexte im Code
+    (`handle_timeout_exception`) - *"the website seems to **not be
+    loaded correctly**"* - nicht den zweiten ("loaded correctly, but
+    setup incorrect", der die gesuchten Feldnamen aufgelistet hätte).
+    Die Seite lädt also gar nicht erst fertig; es ist nie zum
+    Feld-Abgleich gekommen. `IBEAM_USER_NAME_EL` bleibt gesetzt (schadet
+    nicht), ist aber nicht die Ursache.
+14. **Der tatsächliche Login-Blocker: `IBEAM_PAGE_LOAD_TIMEOUT` zu
+    knapp.** Der Log-Text selbst nennt die Lösung: "Consider increasing
+    IBEAM_PAGE_LOAD_TIMEOUT" (Standard: 15s). Passt zur bestätigten
+    CPU-Drosselung (0.15 CPU, Render Free) - ein vollständiger
+    Chromium-Seitenaufbau der IBKR-Login-Seite braucht darunter
+    vermutlich deutlich länger als 15 Sekunden. Auf 90s hochgesetzt in
+    `render.yaml`. Noch nicht mit einem erfolgreichen Deploy bestätigt -
+    das ist der aktuelle Stand.

@@ -66,14 +66,18 @@ services:
       # Ursache aller bisherigen Login-Fehlschläge.
       - key: IBEAM_USE_PAPER_ACCOUNT
         value: "True"
-      # Per Quellcode-Analyse (login_handler.py, _VERSIONS-Dict) bestätigt:
-      # IBeam kennt zwei Feldnamen für das Username-Feld je nach erkannter
-      # IBKR-Seitenversion - "user_name" (Version 1) vs. "username"
-      # (Version 2). Unsere Logs zeigen "Cannot determine the version,
-      # assuming version 1" -> IBeam sucht nach "user_name", findet es auf
-      # der aktuellen Seite nicht und läuft in eine TimeoutException beim
-      # Warten auf das Feld ("Logging in failed"). Fest auf Version 2s
-      # Feldnamen setzen, um die fehlschlagende Versionserkennung zu
-      # umgehen.
+      # Unbestätigter Nebenschauplatz, schadet aber nicht: siehe
+      # IBEAM_PAGE_LOAD_TIMEOUT unten für die per Log bestätigte,
+      # eigentliche Ursache.
       - key: IBEAM_USER_NAME_EL
         value: "NAME@@username"
+      # EIGENTLICHE URSACHE (per Log-Suche nach "Timeout reached"
+      # bestätigt): IBeam meldet bei JEDEM Versuch "The website seems to
+      # NOT be loaded correctly. Consider increasing
+      # IBEAM_PAGE_LOAD_TIMEOUT" - die Login-Seite lädt innerhalb der
+      # Chromium-Standardwartezeit (15s) nicht fertig. Passt zur
+      # bestätigten CPU-Drosselung (0.15 CPU) auf Render Free: ein voller
+      # Chromium-Seitenaufbau braucht darunter vermutlich deutlich länger.
+      # Großzügig hochgesetzt.
+      - key: IBEAM_PAGE_LOAD_TIMEOUT
+        value: "90"
