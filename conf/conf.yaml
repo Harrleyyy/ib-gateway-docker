@@ -7,11 +7,15 @@
 # vermutlich die eigentliche Ursache der 404-Antworten auf
 # /v1/api/tickle und /sso/Login, nicht (nur) Timing/CPU.
 #
-# Einzige bewusste Abweichung vom Original: der `ips`-Block (siehe unten).
+# Zweite Abweichung vom Original: listenPort 10000 statt 5000.
+# Render hielt trotz PORT=5000-Env-Var seinen eigenen Health-Check
+# dauerhaft auf Port 10000 (Renders interner Default für Web-Services) -
+# das Gateway lauscht deshalb jetzt direkt auf dem Port, den Render
+# tatsächlich abfragt, statt zu versuchen Render umzustimmen.
 ip2loc: "US"
 proxyRemoteSsl: true
 proxyRemoteHost: "https://api.ibkr.com"
-listenPort: 5000
+listenPort: 10000
 listenSsl: true
 ccp: false
 svcEnvironment: "v1"

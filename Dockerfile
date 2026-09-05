@@ -11,15 +11,15 @@
 # im IBKR-Konto ein TOTP-fähiger Authenticator als 2FA-Methode aktiv sein.
 FROM voyz/ibeam:latest
 
-# Das in voyz/ibeam:latest gebündelte Gateway-JAR ist von April 2023
-# (bestätigt durch unsere eigenen Logs: "version: ... Mon, 24 Apr 2023")
-# und kann keine funktionierende Verbindung zu IBKRs Backend aufbauen -
-# bekanntes, offenes Upstream-Problem (github.com/Voyz/ibeam Issue #279).
-# Symptom bei uns: durchgehendes 404 auf /v1/api/iserver/auth/status ab
-# dem allerersten Versuch, unabhängig von jeder eigenen Config-Änderung.
-# Von dort übernommener, von einem anderen Nutzer bestätigter Workaround:
-# aktuelle clientportal.gw direkt von IBKR laden und die veraltete
-# dist/-JAR damit überschreiben.
+# Das in voyz/ibeam:latest gebündelte Gateway-JAR ist von April 2023.
+# Workaround aus github.com/Voyz/ibeam Issue #279: aktuelle
+# clientportal.gw direkt von IBKR laden und die dist/-JAR damit
+# überschreiben. GETESTET: löst unser 404-Problem auf
+# /v1/api/iserver/auth/status NICHT - der Fehler tritt mit der frisch
+# geladenen Version identisch auf. Bleibt trotzdem drin (schadet nicht,
+# nimmt diese Variable aus der Gleichung), aber die eigentliche Ursache
+# ist vermutlich woanders (siehe docs/SETUP.md, Verdacht: IBKR blockt
+# Anfragen von Cloud-/Rechenzentrums-IPs wie Render).
 RUN curl -sL https://download2.interactivebrokers.com/portal/clientportal.gw.zip -o /tmp/cpgw.zip \
     && python3 -c "import zipfile; zipfile.ZipFile('/tmp/cpgw.zip').extractall('/tmp/cpgw')" \
     && rm -rf /srv/clientportal.gw/dist \
@@ -33,7 +33,7 @@ RUN curl -sL https://download2.interactivebrokers.com/portal/clientportal.gw.zip
 # braucht das intern zwingend, siehe Kommentar dort).
 COPY conf/conf.yaml /srv/inputs/conf.yaml
 
-EXPOSE 5000
+EXPOSE 10000
 
 # "/" liefert die Login-Seite selbst aus und antwortet unabhängig vom
 # Auth-Status zuverlässig - reicht als reiner Liveness-Check.
@@ -41,6 +41,8 @@ EXPOSE 5000
 # manchmal mit 404, solange IBeam noch mit Login/Status-Checks
 # beschäftigt ist, was Render dazu brachte den Service ständig neu zu
 # starten statt den Login fertig laufen zu lassen.
+# Port 10000 statt 5000: siehe conf/conf.yaml, Render ignoriert unsere
+# PORT-Env-Var und prüft immer seinen eigenen Default-Port 10000.
 # -k: das Gateway nutzt ein selbstsigniertes Zertifikat (IBKR-Standard).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
-  CMD curl -skf https://localhost:5000/ || exit 1
+  CMD curl -skf https://localhost:10000/ || exit 1

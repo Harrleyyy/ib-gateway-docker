@@ -21,14 +21,20 @@ services:
     # mit 200 - reicht als reiner "Container lebt"-Check.
     healthCheckPath: /
     envVars:
-      # IBeam/der Gateway öffnet neben 5000 (API) noch einen zweiten,
-      # von IBeam selbst nicht dokumentierten Port 5001. Ohne festen
-      # PORT-Wert erkennt Render das zur Laufzeit als "neuen primären
-      # Port", schaltet mitten im Login-Vorgang um und startet den
-      # Deploy neu - das riss die Selenium-Verbindung ab. Fest auf 5000
-      # pinnen, damit Render nicht mehr umschaltet.
+      # Render ignoriert einen selbst gesetzten PORT-Wert für seinen
+      # eigenen Health-Check und bleibt bei seinem Default 10000 (per
+      # Deploy-Log bestätigt: "Waiting for internal health check ...
+      # :10000/" blieb über 10+ Minuten unverändert, obwohl PORT=5000
+      # gesetzt war). Deshalb umgekehrter Ansatz: Gateway lauscht direkt
+      # auf 10000 (siehe conf/conf.yaml), PORT hier nur der guten Ordnung
+      # halber mitgeführt.
       - key: PORT
-        value: "5000"
+        value: "10000"
+      # IBeams eigene Login-Automatisierung (Selenium + Status-Checks)
+      # zielt sonst hart auf https://localhost:5000 - muss auf den
+      # tatsächlichen Port des Gateways (10000) mitgezogen werden.
+      - key: IBEAM_GATEWAY_BASE_URL
+        value: "https://localhost:10000"
       - key: IBEAM_ACCOUNT
         sync: false
       - key: IBEAM_PASSWORD

@@ -122,14 +122,31 @@ ein nicht existierendes Gateway laufen.
    Render-Log entdeckt: IBeam hat einen eigenen Login/Paper-Toggle auf
    der IBKR-Seite (`LIVE_PAPER_TOGGLE_EL`). Jetzt per
    `IBEAM_USE_PAPER_ACCOUNT=True` in `render.yaml` behoben.
-10. **Veraltete gebündelte Gateway-JAR (Hauptursache der 404-Fehler).**
+10. **Veraltete gebündelte Gateway-JAR - WIDERLEGT als Ursache.**
     Das in `voyz/ibeam:latest` enthaltene Gateway-Binary stammt laut
-    unseren eigenen Logs vom **24. April 2023** und kann laut einem
-    offenen Upstream-Issue (github.com/Voyz/ibeam #279) keine
-    funktionierende Verbindung zu IBKRs Backend aufbauen - Symptom:
-    durchgehendes 404 auf `/v1/api/iserver/auth/status` ab dem
-    allerersten Versuch, unabhängig von jeder Config. Behoben im
-    Dockerfile: aktuelle `clientportal.gw` wird beim Image-Build direkt
-    von IBKR nachgeladen und überschreibt die veraltete Version. Das ist
-    der von einem anderen Nutzer bestätigte Workaround aus dem Issue -
-    bei uns noch nicht mit einem erfolgreichen Deploy bestätigt.
+    unseren Logs vom 24. April 2023; ein offenes Upstream-Issue
+    (github.com/Voyz/ibeam #279) beschreibt genau dieses Problem und
+    einen Workaround (aktuelle `clientportal.gw` beim Image-Build direkt
+    von IBKR nachladen). Umgesetzt in `Dockerfile` - **aber getestet und
+    bestätigt: löst unser 404 auf `/v1/api/iserver/auth/status` NICHT**.
+    Der Fehler tritt mit der frisch geladenen Version identisch auf.
+    Bleibt trotzdem im Dockerfile (kein Nachteil), aber diese Spur ist
+    damit ausgeschöpft.
+11. **Render ignoriert eine selbst gesetzte `PORT`-Env-Var für seinen
+    Health-Check.** Über 10+ Minuten blieb "Waiting for internal health
+    check ... :10000/" unverändert, obwohl `PORT=5000` gesetzt war.
+    Umgedreht: Gateway lauscht jetzt direkt auf Renders Default-Port
+    10000 (`conf/conf.yaml`, `IBEAM_GATEWAY_BASE_URL` in `render.yaml`)
+    statt zu versuchen, Render umzustimmen. Noch nicht mit einem
+    erfolgreichen Deploy bestätigt.
+12. **Führende Vermutung für das verbleibende 404-Rätsel: IBKR blockt
+    Cloud-/Rechenzentrums-IPs.** Da selbst eine frisch heruntergeladene
+    Gateway-Version identisch fehlschlägt, deutet vieles darauf hin, dass
+    `api.ibkr.com` (per `proxyRemoteHost`) Anfragen von bekannten
+    Cloud-IP-Bereichen wie Render anders behandelt oder ablehnt - eine
+    verbreitete Anti-Bot-Maßnahme bei Brokern. **Nicht bestätigt.**
+    Der einzige eindeutige Test: dieselbe Konfiguration einmal per
+    `docker compose up --build` auf einem Rechner mit normalem
+    Heim-/Büro-Internet laufen lassen. Klappt es dort, ist Render als
+    Standort für den automatisierten Login ungeeignet, unabhängig von
+    weiterer Konfiguration.
