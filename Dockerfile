@@ -14,12 +14,14 @@ FROM voyz/ibeam:latest
 # Eigene conf.yaml über das von IBeam vorgesehene Inputs-Verzeichnis
 # einspeisen (überschreibt die Standard-conf.yaml des Gateways beim Start).
 # Siehe conf/conf.yaml für die Begründung der Anpassungen (IP-Allowlist,
-# HTTP statt HTTPS intern für den Betrieb hinter Render).
+# HTTPS mit selbstsigniertem Zertifikat - IBeams eigene Login-Automatisierung
+# braucht das intern zwingend, siehe Kommentar dort).
 COPY conf/conf.yaml /srv/inputs/conf.yaml
 
 EXPOSE 5000
 
 # /v1/api/tickle antwortet bereits, wenn das Gateway-Prozess läuft
 # (unabhängig vom Auth-Status) - reicht als reiner Liveness-Check.
+# -k: das Gateway nutzt ein selbstsigniertes Zertifikat (IBKR-Standard).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
-  CMD curl -sf http://localhost:5000/v1/api/tickle || exit 1
+  CMD curl -skf https://localhost:5000/v1/api/tickle || exit 1

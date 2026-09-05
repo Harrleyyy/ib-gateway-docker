@@ -29,8 +29,11 @@ Nach dem Start (kann beim ersten Mal 1-2 Minuten dauern, Chromium-Login
 im Hintergrund):
 
 ```bash
-curl -s http://localhost:5000/v1/api/iserver/auth/status
+curl -sk https://localhost:5000/v1/api/iserver/auth/status
 ```
+
+(`-k`, weil das Gateway ein selbstsigniertes Zertifikat nutzt - siehe
+`conf/conf.yaml`.)
 
 `"authenticated": true` → Login funktioniert. Erst wenn das lokal steht,
 weiter zu Render.
@@ -78,12 +81,16 @@ ein nicht existierendes Gateway laufen.
    Kauf nehmen, oder in `docs/` nach einer Chromium-Flag-Optimierung
    suchen (`--single-process`, `--no-zygote` etc.), bevor man das
    Budget-Ziel aufgibt.
-2. **`listenSsl: false` hinter Renders TLS-Terminierung**
-   (`conf/conf.yaml`). Passt zum Render-Modell (Render terminiert HTTPS
-   extern, leitet intern per HTTP weiter), aber nicht live verifiziert,
-   ob IBeams interner Login-Schritt zwingend `https://localhost:5000`
-   erwartet. Erster Fehlerverdacht bei Login-Problemen nach dem Render-
-   Deploy: hier nachsehen.
+2. **HTTPS intern zwingend erforderlich** (`conf/conf.yaml`,
+   `listenSsl: true`). Ursprünglich hatten wir das auf `false` gestellt
+   in der Annahme, Render leitet intern per HTTP weiter - per
+   Render-Deploy-Log widerlegt: IBeams eigene Login-Automatisierung
+   lädt intern fest `https://localhost:5000/...` und bricht sonst mit
+   SSL-Fehlern ab. Jetzt korrigiert. **Noch offen:** ob Renders externe
+   HTTPS-Terminierung (`healthCheckPath` in `render.yaml`, UptimeRobot,
+   `gateway_client.py`) sauber zu einem intern per HTTPS laufenden
+   Container durchreicht, oder ob dort ein neuer Fehler auftaucht -
+   das zeigt erst der nächste Deploy.
 3. **`ips.allow: 0.0.0.0/0`** öffnet die Gateway-API für jeden, der die
    Render-URL kennt. Nur vertretbar, weil ausschließlich der Paper-
    Account dahinterhängt - niemals unverändert für ein Live-Konto
