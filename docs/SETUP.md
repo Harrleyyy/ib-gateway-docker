@@ -73,14 +73,15 @@ ein nicht existierendes Gateway laufen.
 
 ## Bekannte Risiken (bewusst nicht vorab wegdiskutiert)
 
-1. **RAM auf Render Free Tier.** IBeams eigene Empfehlung für den
-   Selenium-Login-Schritt liegt bei 2 GB RAM; Render Free liegt
-   typischerweise bei 512 MB. Ob der Login zuverlässig durchläuft, ist
-   ungetestet. Falls der Container beim Login abstürzt/neustartet:
-   entweder eine knapp bezahlte Render-Stufe für den Login-Moment in
-   Kauf nehmen, oder in `docs/` nach einer Chromium-Flag-Optimierung
-   suchen (`--single-process`, `--no-zygote` etc.), bevor man das
-   Budget-Ziel aufgibt.
+1. **RAM war NICHT das Problem** (per Render-Metrics geprüft, weit unter
+   den 512MB Limit). Der tatsächliche Engpass: Render Free Tier drosselt
+   auf **0.15 CPU**. IBeams Standard-Wartezeit nach dem Gateway-Start
+   (`IBEAM_GATEWAY_STARTUP=20s`) reichte damit nicht, bis die
+   API-Routen des Java-Gateways wirklich bereit waren - führte zu
+   404-Antworten auf `/v1/api/tickle` direkt nach dem Start. Behoben
+   durch `IBEAM_GATEWAY_STARTUP=180`, `IBEAM_REQUEST_RETRIES=10`,
+   `IBEAM_REQUEST_TIMEOUT=30` in `render.yaml` - noch nicht mit einem
+   erfolgreichen Deploy bestätigt.
 2. **HTTPS intern zwingend erforderlich** (`conf/conf.yaml`,
    `listenSsl: true`). Ursprünglich hatten wir das auf `false` gestellt
    in der Annahme, Render leitet intern per HTTP weiter - per

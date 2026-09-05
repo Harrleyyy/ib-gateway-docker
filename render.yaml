@@ -2,10 +2,10 @@
 # dieses Repo auswählen. Env-Var-Werte (sync: false) trägst du danach im
 # Render-Dashboard ein, nicht hier im Repo.
 #
-# Bekanntes Risiko: IBeam selbst empfiehlt für den Selenium-Login-Schritt
-# mind. 2GB RAM; Renders Free-Tier hat üblicherweise nur 512MB. Ob der
-# Login darin zuverlässig durchläuft, ist ungetestet - siehe
-# docs/SETUP.md, Abschnitt "Bekannte Risiken".
+# RAM war laut Render-Metrics NICHT das Problem (weit unter 512MB).
+# Tatsächlicher Engpass: Render Free Tier drosselt auf 0.15 CPU - siehe
+# IBEAM_GATEWAY_STARTUP/RETRIES/TIMEOUT unten. Siehe docs/SETUP.md,
+# Abschnitt "Bekannte Risiken" für den aktuellen Stand.
 services:
   - type: web
     name: ib-gateway-paper
@@ -35,3 +35,14 @@ services:
         sync: false
       - key: IBEAM_PYOTP_SECRET
         sync: false
+      # Render Free Tier drosselt auf 0.15 CPU - der Java-Gateway-Prozess
+      # braucht damit vermutlich deutlich länger als IBeams Standard-
+      # Wartezeit (20s), bis seine API-Routen wirklich bereit sind.
+      # Das erklärt die 404-Antworten auf /v1/api/tickle direkt nach dem
+      # Start. Grosszügiger bemessen:
+      - key: IBEAM_GATEWAY_STARTUP
+        value: "180"
+      - key: IBEAM_REQUEST_RETRIES
+        value: "10"
+      - key: IBEAM_REQUEST_TIMEOUT
+        value: "30"
