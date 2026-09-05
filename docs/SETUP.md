@@ -118,10 +118,18 @@ ein nicht existierendes Gateway laufen.
    - eine bekannte, von mehreren IBeam-Nutzern gemeldete Warnung
    (GitHub-Issues #261, #145), die auftritt, wenn sich IBKRs Login-Seite
    anders darstellt als von IBeam erwartet. Nicht zwingend fatal.
-9. **`USE_PAPER_ACCOUNT` stand auf `False` (vermutlich DER Haupt-Bug).**
-   Per Config-Dump im Render-Log entdeckt: IBeam hat einen eigenen
-   Login/Paper-Toggle auf der IBKR-Seite (`LIVE_PAPER_TOGGLE_EL`) und
-   versuchte damit, mit Paper-Zugangsdaten im "Live"-Modus einzuloggen.
-   Jetzt per `IBEAM_USE_PAPER_ACCOUNT=True` in `render.yaml` behoben -
-   das ist der wahrscheinlichste Fund bisher, aber noch nicht mit einem
-   erfolgreichen Deploy bestätigt.
+9. **`USE_PAPER_ACCOUNT` stand auf `False`.** Per Config-Dump im
+   Render-Log entdeckt: IBeam hat einen eigenen Login/Paper-Toggle auf
+   der IBKR-Seite (`LIVE_PAPER_TOGGLE_EL`). Jetzt per
+   `IBEAM_USE_PAPER_ACCOUNT=True` in `render.yaml` behoben.
+10. **Veraltete gebündelte Gateway-JAR (Hauptursache der 404-Fehler).**
+    Das in `voyz/ibeam:latest` enthaltene Gateway-Binary stammt laut
+    unseren eigenen Logs vom **24. April 2023** und kann laut einem
+    offenen Upstream-Issue (github.com/Voyz/ibeam #279) keine
+    funktionierende Verbindung zu IBKRs Backend aufbauen - Symptom:
+    durchgehendes 404 auf `/v1/api/iserver/auth/status` ab dem
+    allerersten Versuch, unabhängig von jeder Config. Behoben im
+    Dockerfile: aktuelle `clientportal.gw` wird beim Image-Build direkt
+    von IBKR nachgeladen und überschreibt die veraltete Version. Das ist
+    der von einem anderen Nutzer bestätigte Workaround aus dem Issue -
+    bei uns noch nicht mit einem erfolgreichen Deploy bestätigt.

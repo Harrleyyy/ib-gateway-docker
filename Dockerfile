@@ -11,6 +11,21 @@
 # im IBKR-Konto ein TOTP-fähiger Authenticator als 2FA-Methode aktiv sein.
 FROM voyz/ibeam:latest
 
+# Das in voyz/ibeam:latest gebündelte Gateway-JAR ist von April 2023
+# (bestätigt durch unsere eigenen Logs: "version: ... Mon, 24 Apr 2023")
+# und kann keine funktionierende Verbindung zu IBKRs Backend aufbauen -
+# bekanntes, offenes Upstream-Problem (github.com/Voyz/ibeam Issue #279).
+# Symptom bei uns: durchgehendes 404 auf /v1/api/iserver/auth/status ab
+# dem allerersten Versuch, unabhängig von jeder eigenen Config-Änderung.
+# Von dort übernommener, von einem anderen Nutzer bestätigter Workaround:
+# aktuelle clientportal.gw direkt von IBKR laden und die veraltete
+# dist/-JAR damit überschreiben.
+RUN curl -sL https://download2.interactivebrokers.com/portal/clientportal.gw.zip -o /tmp/cpgw.zip \
+    && python3 -c "import zipfile; zipfile.ZipFile('/tmp/cpgw.zip').extractall('/tmp/cpgw')" \
+    && rm -rf /srv/clientportal.gw/dist \
+    && cp -r /tmp/cpgw/dist /srv/clientportal.gw/ \
+    && rm -rf /tmp/cpgw.zip /tmp/cpgw
+
 # Eigene conf.yaml über das von IBeam vorgesehene Inputs-Verzeichnis
 # einspeisen (überschreibt die Standard-conf.yaml des Gateways beim Start).
 # Siehe conf/conf.yaml für die Begründung der Anpassungen (IP-Allowlist,
