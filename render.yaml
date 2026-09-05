@@ -1,0 +1,24 @@
+# Render Blueprint (Free Tier). Deploy: render.com -> New -> Blueprint ->
+# dieses Repo auswählen. Env-Var-Werte (sync: false) trägst du danach im
+# Render-Dashboard ein, nicht hier im Repo.
+#
+# Bekanntes Risiko: IBeam selbst empfiehlt für den Selenium-Login-Schritt
+# mind. 2GB RAM; Renders Free-Tier hat üblicherweise nur 512MB. Ob der
+# Login darin zuverlässig durchläuft, ist ungetestet - siehe
+# docs/SETUP.md, Abschnitt "Bekannte Risiken".
+services:
+  - type: web
+    name: ib-gateway-paper
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /v1/api/tickle
+    envVars:
+      - key: IBEAM_ACCOUNT
+        sync: false
+      - key: IBEAM_PASSWORD
+        sync: false
+      - key: IBEAM_TWO_FA_HANDLER
+        value: PYOTP
+      - key: IBEAM_PYOTP_SECRET
+        sync: false

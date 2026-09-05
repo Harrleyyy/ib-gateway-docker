@@ -1,0 +1,11 @@
+# Nur für lokales Testen des Gateway-Logins, bevor auf Render deployed
+# wird. Zugangsdaten kommen aus .env (siehe .env.example), niemals hier
+# eintragen oder committen.
+services:
+  ib-gateway:
+    build: .
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    restart: unless-stopped

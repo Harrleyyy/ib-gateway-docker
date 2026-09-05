@@ -1,0 +1,33 @@
+# Angepasste Gateway-Konfiguration für den Betrieb auf Render (Free Tier).
+#
+# Gegenüber der von IBeam mitgelieferten Standard-conf.yaml zwei bewusste
+# Abweichungen:
+#
+# 1. listenSsl: false
+#    Render terminiert TLS selbst am Edge (https://<service>.onrender.com)
+#    und leitet intern per HTTP an den Container weiter. Läuft der Gateway
+#    intern zusätzlich mit eigenem (selbstsigniertem) TLS, kollidiert das
+#    mit Renders Proxy. UNGETESTET in diesem Setup - das ist der erste
+#    Punkt, den man nach dem ersten Deploy prüfen sollte (siehe
+#    docs/SETUP.md, Abschnitt "Bekannte Risiken"). Falls IBeams eigene
+#    Login-Automatisierung intern hart auf https://localhost:5000 besteht
+#    und deshalb mit dieser Einstellung nicht mehr funktioniert, auf
+#    listenSsl: true zurückstellen und stattdessen extern per
+#    `curl -k https://...` (selbstsigniertes Zertifikat) zugreifen.
+#
+# 2. ips.allow enthält 0.0.0.0/0
+#    Die Aufrufer (Claude-Code-Routine in der Cloud, UptimeRobot-Pinger)
+#    haben keine feste, vorhersagbare IP. Das öffnet die Gateway-API für
+#    beliebige Absender, die die Render-URL kennen - akzeptabel nur, weil
+#    hier ausschließlich ein Paper-Trading-Account ohne echtes Geld
+#    dahinterhängt. NICHT unverändert für ein Live-Konto verwenden.
+listenPort: 5000
+listenSsl: false
+
+cors:
+  origin.allowed: "*"
+
+ips:
+  allow:
+    - 0.0.0.0/0
+  deny: []
