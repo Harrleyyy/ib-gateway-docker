@@ -18,7 +18,12 @@ services:
         sync: false
       - key: IBEAM_PASSWORD
         sync: false
+      # Leer lassen, solange der Account nur IB-Key-Push nutzt (kein
+      # TOTP-Secret verfügbar) - IBeam erwartet dann keinen 2FA-Handler
+      # und wartet stattdessen auf die manuelle Push-Bestätigung. Nur
+      # auf PYOTP setzen, wenn im IBKR-Konto ein Authenticator mit
+      # echtem TOTP-Secret eingerichtet wurde.
       - key: IBEAM_TWO_FA_HANDLER
-        value: PYOTP
+        sync: false
       - key: IBEAM_PYOTP_SECRET
         sync: false
