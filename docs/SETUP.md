@@ -117,9 +117,11 @@ ein nicht existierendes Gateway laufen.
 8. **"Cannot determine the version of IBKR website, assuming version 1"**
    - eine bekannte, von mehreren IBeam-Nutzern gemeldete Warnung
    (GitHub-Issues #261, #145), die auftritt, wenn sich IBKRs Login-Seite
-   anders darstellt als von IBeam erwartet. Nicht zwingend fatal, aber
-   möglicher Hinweis auf ein tieferliegendes Kompatibilitätsproblem
-   zwischen der aktuellen IBKR-Login-Seite und der installierten
-   IBeam-Version - dafür gibt es upstream keine dokumentierte Lösung.
-   Falls der Login trotz Punkt 7 weiterhin nicht durchläuft, ist das
-   der nächste Verdächtige.
+   anders darstellt als von IBeam erwartet. Nicht zwingend fatal.
+9. **`USE_PAPER_ACCOUNT` stand auf `False` (vermutlich DER Haupt-Bug).**
+   Per Config-Dump im Render-Log entdeckt: IBeam hat einen eigenen
+   Login/Paper-Toggle auf der IBKR-Seite (`LIVE_PAPER_TOGGLE_EL`) und
+   versuchte damit, mit Paper-Zugangsdaten im "Live"-Modus einzuloggen.
+   Jetzt per `IBEAM_USE_PAPER_ACCOUNT=True` in `render.yaml` behoben -
+   das ist der wahrscheinlichste Fund bisher, aber noch nicht mit einem
+   erfolgreichen Deploy bestätigt.

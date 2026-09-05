@@ -53,3 +53,10 @@ services:
         value: "10"
       - key: IBEAM_REQUEST_TIMEOUT
         value: "30"
+      # KRITISCH: Ohne das versucht IBeam den Login-Toggle auf der
+      # IBKR-Seite auf "Live" zu lassen, obwohl wir Paper-Zugangsdaten
+      # verwenden (per Config-Dump im Render-Log bestätigt:
+      # USE_PAPER_ACCOUNT stand auf False). Vermutlich die eigentliche
+      # Ursache aller bisherigen Login-Fehlschläge.
+      - key: IBEAM_USE_PAPER_ACCOUNT
+        value: "True"
