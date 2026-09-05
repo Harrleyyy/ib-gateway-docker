@@ -98,3 +98,9 @@ ein nicht existierendes Gateway laufen.
 4. **2FA-Push nicht automatisierbar** (siehe Schritt 1) - falls dein
    Paper-Account keine TOTP-Option anbietet, ist "vollautomatisch" mit
    einer Einschränkung: gelegentliche manuelle Bestätigung nötig.
+5. **Render erkennt Ports automatisch zur Laufzeit.** Der Gateway öffnet
+   neben 5000 (API) noch einen zweiten, von IBeam nicht dokumentierten
+   Port 5001. Ohne festen `PORT`-Wert schaltet Render darauf um und
+   startet mitten im Login neu ("New primary port detected"). Per
+   `PORT=5000` in `render.yaml` fest gepinnt - falls trotzdem noch
+   Port-Wechsel in den Logs auftauchen, das als erstes prüfen.

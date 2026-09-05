@@ -14,6 +14,14 @@ services:
     plan: free
     healthCheckPath: /v1/api/tickle
     envVars:
+      # IBeam/der Gateway öffnet neben 5000 (API) noch einen zweiten,
+      # von IBeam selbst nicht dokumentierten Port 5001. Ohne festen
+      # PORT-Wert erkennt Render das zur Laufzeit als "neuen primären
+      # Port", schaltet mitten im Login-Vorgang um und startet den
+      # Deploy neu - das riss die Selenium-Verbindung ab. Fest auf 5000
+      # pinnen, damit Render nicht mehr umschaltet.
+      - key: PORT
+        value: "5000"
       - key: IBEAM_ACCOUNT
         sync: false
       - key: IBEAM_PASSWORD
