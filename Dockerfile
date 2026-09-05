@@ -20,8 +20,12 @@ COPY conf/conf.yaml /srv/inputs/conf.yaml
 
 EXPOSE 5000
 
-# /v1/api/tickle antwortet bereits, wenn das Gateway-Prozess läuft
-# (unabhängig vom Auth-Status) - reicht als reiner Liveness-Check.
+# "/" liefert die Login-Seite selbst aus und antwortet unabhängig vom
+# Auth-Status zuverlässig - reicht als reiner Liveness-Check.
+# /v1/api/tickle wurde hier bewusst NICHT genommen: es antwortet
+# manchmal mit 404, solange IBeam noch mit Login/Status-Checks
+# beschäftigt ist, was Render dazu brachte den Service ständig neu zu
+# starten statt den Login fertig laufen zu lassen.
 # -k: das Gateway nutzt ein selbstsigniertes Zertifikat (IBKR-Standard).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
-  CMD curl -skf https://localhost:5000/v1/api/tickle || exit 1
+  CMD curl -skf https://localhost:5000/ || exit 1

@@ -12,7 +12,14 @@ services:
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
-    healthCheckPath: /v1/api/tickle
+    # /v1/api/tickle antwortet manchmal nicht zuverlässig (404), solange
+    # IBeam noch mit Login/Status-Checks beschäftigt ist. Render hielt
+    # den Service deshalb für ungesund und startete ihn ständig neu,
+    # bevor der Login überhaupt fertig laufen konnte ("lädt endlos,
+    # startet von selbst neu" im Browser). "/" liefert die Login-Seite
+    # selbst aus und antwortet unabhängig vom Auth-Status zuverlässig
+    # mit 200 - reicht als reiner "Container lebt"-Check.
+    healthCheckPath: /
     envVars:
       # IBeam/der Gateway öffnet neben 5000 (API) noch einen zweiten,
       # von IBeam selbst nicht dokumentierten Port 5001. Ohne festen

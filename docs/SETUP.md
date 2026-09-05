@@ -87,26 +87,39 @@ ein nicht existierendes Gateway laufen.
    (aus `copy_cache/clientportal.gw/root/conf.yaml` im Voyz/ibeam-Repo)
    ersetzt, nur der `ips`-Block bleibt angepasst. Noch nicht mit einem
    erfolgreichen Deploy bestätigt.
-2. **HTTPS intern zwingend erforderlich** (`conf/conf.yaml`,
+3. **HTTPS intern zwingend erforderlich** (`conf/conf.yaml`,
    `listenSsl: true`). Ursprünglich hatten wir das auf `false` gestellt
    in der Annahme, Render leitet intern per HTTP weiter - per
    Render-Deploy-Log widerlegt: IBeams eigene Login-Automatisierung
    lädt intern fest `https://localhost:5000/...` und bricht sonst mit
-   SSL-Fehlern ab. Jetzt korrigiert. **Noch offen:** ob Renders externe
-   HTTPS-Terminierung (`healthCheckPath` in `render.yaml`, UptimeRobot,
-   `gateway_client.py`) sauber zu einem intern per HTTPS laufenden
-   Container durchreicht, oder ob dort ein neuer Fehler auftaucht -
-   das zeigt erst der nächste Deploy.
-3. **`ips.allow: 0.0.0.0/0`** öffnet die Gateway-API für jeden, der die
+   SSL-Fehlern ab. Jetzt korrigiert.
+4. **`ips.allow: 0.0.0.0/0`** öffnet die Gateway-API für jeden, der die
    Render-URL kennt. Nur vertretbar, weil ausschließlich der Paper-
    Account dahinterhängt - niemals unverändert für ein Live-Konto
    übernehmen.
-4. **2FA-Push nicht automatisierbar** (siehe Schritt 1) - falls dein
+5. **2FA-Push nicht automatisierbar** (siehe Schritt 1) - falls dein
    Paper-Account keine TOTP-Option anbietet, ist "vollautomatisch" mit
    einer Einschränkung: gelegentliche manuelle Bestätigung nötig.
-5. **Render erkennt Ports automatisch zur Laufzeit.** Der Gateway öffnet
+6. **Render erkennt Ports automatisch zur Laufzeit.** Der Gateway öffnet
    neben 5000 (API) noch einen zweiten, von IBeam nicht dokumentierten
    Port 5001. Ohne festen `PORT`-Wert schaltet Render darauf um und
    startet mitten im Login neu ("New primary port detected"). Per
-   `PORT=5000` in `render.yaml` fest gepinnt - falls trotzdem noch
-   Port-Wechsel in den Logs auftauchen, das als erstes prüfen.
+   `PORT=5000` in `render.yaml` fest gepinnt.
+7. **Health-Check auf `/v1/api/tickle` löste Neustart-Schleife aus.**
+   Dieser Endpunkt antwortet unzuverlässig (404), solange IBeam noch
+   mit Login/Status-Checks beschäftigt ist - Render hielt den Service
+   deshalb ständig für ungesund und startete neu, bevor der Login
+   fertig laufen konnte (im Browser sichtbar als endloses Laden mit
+   gelegentlichem Neustart). `healthCheckPath` jetzt auf `/`
+   (Login-Seite, antwortet unabhängig vom Auth-Status) umgestellt.
+   Noch nicht mit einem erfolgreichen Deploy bestätigt - das ist der
+   aktuelle Stand.
+8. **"Cannot determine the version of IBKR website, assuming version 1"**
+   - eine bekannte, von mehreren IBeam-Nutzern gemeldete Warnung
+   (GitHub-Issues #261, #145), die auftritt, wenn sich IBKRs Login-Seite
+   anders darstellt als von IBeam erwartet. Nicht zwingend fatal, aber
+   möglicher Hinweis auf ein tieferliegendes Kompatibilitätsproblem
+   zwischen der aktuellen IBKR-Login-Seite und der installierten
+   IBeam-Version - dafür gibt es upstream keine dokumentierte Lösung.
+   Falls der Login trotz Punkt 7 weiterhin nicht durchläuft, ist das
+   der nächste Verdächtige.
